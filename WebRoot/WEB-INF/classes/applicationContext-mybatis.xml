@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+      xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd" default-autowire="byName">
+        <!-- 1. 扫描包  @Service @Resource-->
+        <context:component-scan base-package="com.yh.service.impl"></context:component-scan>
+        <!-- 2. 加载属性文件 -->
+        <context:property-placeholder location="classpath:db.properties"/>
+        <!-- 3. 获取数据源,spring原始连接池 -->
+         <!-- <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        	<property name="driverClassName" value="${mysql.driver}"></property>
+        	<property name="url" value="${mysql.url}"></property>
+        	<property name="username" value="${mysql.username}"></property>
+        	<property name="password" value="${mysql.password}"></property>
+        </bean>  -->
+        <!-- 阿里巴巴druid连接池 -->
+        <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        	<property name="driverClassName" value="${mysql.driver}"></property>
+        	<property name="url" value="${mysql.url}"></property>
+        	<property name="username" value="${mysql.username}"></property>
+        	<property name="password" value="${mysql.password}"></property>
+        </bean> 
+        <!-- c3p0连接池 -->
+         <!-- <bean id="dataSource" class="org.apache.tomcat.dbcp.dbcp2.BasicDataSource">
+       		<property name="driverClassName" value="${mysql.driver}"></property>
+        	<property name="url" value="${mysql.url}"></property>
+        	<property name="username" value="${mysql.username}"></property>
+        	<property name="password" value="${mysql.password}"></property>
+   		 </bean> -->
+   		 <!--proxool连接池-->
+		 <!-- <bean id="dataSource" class="org.logicalcobwebs.proxool.ProxoolDataSource">
+		    <property name="driver" value="${proxool.driver}"></property>
+		    <property name="driverUrl" value="${proxool.driverUrl}"></property>
+		    <property name="user" value="${proxool.user}"></property>
+		    <property name="password" value="${proxool.password}"></property>
+		    <property name="alias" value="${proxool.alias}" />
+		    <property name="houseKeepingSleepTime" value="${proxool.houseKeepingSleepTime}" />
+		    <property name="prototypeCount" value="${proxool.prototypeCount}" />
+		    <property name="maximumConnectionCount" value="${proxool.maximumConnectionCount}" />
+		    <property name="minimumConnectionCount" value="${proxool.minimumConnectionCount}" />
+		    <property name="simultaneousBuildThrottle" value="${proxool.simultaneousBuildThrottle}" />
+		    <property name="maximumConnectionLifetime" value="${proxool.maximumConnectionLifetime}" />
+		    <property name="houseKeepingTestSql" value="${proxool.houseKeepingTestSql}" />
+	</bean> -->
+        <!-- 4. SQLSessionFactory实例 -->
+        <bean id="factory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        	<property name="configLocation" value="classpath:mybatis.xml"></property>
+        </bean>
+        <!-- 5. Mapper扫描器 -->
+        <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        	<property name="basePackage" value="com.yh.mapper"></property>
+        	<property name="sqlSessionFactoryBeanName" value="factory"></property>
+        </bean>
+        <!-- 6.事务管理器 -->
+        <bean id="txManage" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"></bean>
+        <!-- 7.声明式事务 -->
+        <tx:advice id="txAdvice" transaction-manager="txManage">
+        	<tx:attributes>
+        		<tx:method name="ins*"/>
+        		<tx:method name="upd*"/>
+        		<tx:method name="del*"/>
+        		<tx:method name="*" read-only="true"/>
+        	</tx:attributes>
+        </tx:advice>
+        <!-- 8.配置aop -->
+        <aop:config>
+        	<aop:pointcut expression="execution(* com.yh.service.impl.*.*(..))" id="mypoint"/>
+        	<aop:advisor advice-ref="txAdvice" pointcut-ref="mypoint"/>
+        </aop:config>
+</beans>
